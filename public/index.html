@@ -45,15 +45,15 @@
     <main class="container">
       <h1>Capy Test</h1>
       <div class="center">
-        <button class="move" onclick="moveV()">U</button>
+        <button onmousedown="moveV(0.15)" onmouseup="moveV(0)" class="move">U</button>
       </div>
       <div class="center">
-        <button class="move" onclick="moveH()">L</button>
+        <button onmousedown="turn(-0.2)" onmouseup="turn(0)"  class="move">L</button>
         <button class="fire" onclick="shoot()">Fire!</button>
-        <button class="move"onclick="moveH()">R</button>
+        <button onmousedown="turn(0.2)" onmouseup="turn(0)" class="move">R</button>
       </div>
       <div class="center">
-        <button class="move"onclick="moveV()">D</button>
+        <button onmousedown="moveV(-0.15)" onmouseup="moveV(0)" class="move">D</button>
       </div>
       <!--Use negative parameter for left and down-->
 
