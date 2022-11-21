@@ -18,6 +18,13 @@ init(() => {
 
     app.post('/drive', (req, res) => {
 
+        // const { rf, rb, lf, lb } = req.body;
+
+        // rightMotorForward.write(rf ?? 0);
+        // rightMotorBackward.write(rb ?? 0);
+        // leftMotorForward.write(lf ?? 0)
+        // leftMotorBackward.write(lb ?? 0);
+
         const { rawX, rawY } = req.body;
         console.log(req.body);
 
