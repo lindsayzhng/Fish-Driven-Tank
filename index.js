@@ -13,6 +13,8 @@ init(() => {
     const leftMotorForward = new SoftPWM(constants.Motors.LEFT_FORWARD);
     const leftMotorBackward = new SoftPWM(constants.Motors.LEFT_BACKWARD);
 
+    const driveMode = 'arcade';
+
     app.use(express.static('public'))
     app.use(express.json());
 
@@ -28,7 +30,14 @@ init(() => {
         const { rawX, rawY } = req.body;
         console.log(req.body);
 
-        arcadeDrive(rawX, rawY);
+        switch (driveMode) {
+            case 'arcade':
+                arcadeDrive(rawX, rawY);
+                break;
+            case 'curvature':
+                curvatureDrive(awX, rawY, true);
+                break;
+        }
 
         res.send(200);
     })
@@ -92,13 +101,20 @@ init(() => {
      * @param {*} param1 
      * @returns 
      */
-    function desaturate([leftSpeed, rightSpeed], [speed, rotation]) {
-        const max = Math.max(Math.abs(speed), Math.abs(rotation));
-        const min = Math.min(Math.abs(speed), Math.abs(rotation));
+    function desaturate([leftSpeed, rightSpeed], [speed, rotation], driveMode) {
 
-        if (!max) return [0, 0];
-        const saturatedInput = (max + min) / max;
-        return [leftSpeed / saturatedInput, rightSpeed / saturatedInput];
+        const max = Math.max(Math.abs(speed), Math.abs(rotation));
+
+        switch (driveMode) {
+            case 'arcade':
+                const min = Math.min(Math.abs(speed), Math.abs(rotation));
+
+                if (!max) return [0, 0];
+                const saturatedInput = (max + min) / max;
+                return [leftSpeed / saturatedInput, rightSpeed / saturatedInput];
+            case 'curvature':
+                return max > 1 ? [leftSpeed / max, rightSpeed / max] : [leftSpeed, rightSpeed];
+        }
     }
 
     /**
@@ -121,13 +137,33 @@ init(() => {
         setMotors(0, 0);
     };
 
+    /**
+     * Arcade drive of the robot.
+     * 
+     * @param {number} rawX raw x input
+     * @param {number} rawY raw y input
+     */
     function arcadeDrive(rawX, rawY) {
 
-        const [speed, rotation] = [rawX, rawY].map(applyDeadband).map(magnifyInputs);
-        const [leftSpeed, rightSpeed] = desaturate([speed - rotation, speed + rotation], [speed, rotation]);
+        const [speed, rotation] = [rawX, rawY].map(applyDeadband).map(clamp).map(magnifyInputs);
+        const [leftSpeed, rightSpeed] = desaturate([speed - rotation, speed + rotation], [speed, rotation], 'arcade');
 
         setMotors(leftSpeed, rightSpeed);
     };
 
-    function curvatureDrive(rawX, rawY) { };
+    /**
+     * Curvature drive of the robot.
+     * 
+     * @param {number} rawX raw x input
+     * @param {number} rawY raw y input
+     */
+    function curvatureDrive(rawX, rawY, allowTurnInPlace = true) {
+
+        const [speed, rotation] = [rawX, rawY].map(applyDeadband).map(clamp).map(magnifyInputs);
+        const [leftSpeed, rightSpeed] = desaturate([speed - rotation, speed + rotation], [speed, rotation]);
+        if (!allowTurnInPlace) [leftSpeed, rightSpeed] = desaturate([speed - Math.abs(speed) * rotation,
+        speed + Math.abs(rotation)], [speed, rotation], 'curvature');
+
+        setMotors(leftSpeed, rightSpeed);
+    };
 });
