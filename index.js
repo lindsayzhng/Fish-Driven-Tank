@@ -9,13 +9,19 @@ const port = 3030;
 app.use(express.static('public'))
 app.use(express.json());
 
-app.listen(port, () => {
-  console.log(`Capy listening on port ${port}`)
-});
 
 try {
   const { SoftPWM } = require('raspi-soft-pwm');
   const { init } = require('raspi');
+
+  // const videoStream = require('raspberrypi-node-camera-web-streamer');
+  // videoStream.acceptConnections(app, {
+  //   width: 1280,
+  //   height: 720,
+  //   fps: 16,
+  //   encoding: 'JPEG',
+  //   quality: 7 //lower is faster
+  // }, '/stream.mjpg', true);
   init(() => {
     const rightMotorForward = new SoftPWM(constants.Motors.RIGHT_FORWARD);
     const rightMotorBackward = new SoftPWM(constants.Motors.RIGHT_BACKWARD);
@@ -168,3 +174,7 @@ try {
 } catch (e) {
 
 }
+
+app.listen(port, () => {
+  console.log(`Capy listening on port ${port}`)
+});

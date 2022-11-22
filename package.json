@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
+    "raspberrypi-node-camera-web-streamer": "^1.1.2",
     "raspi": "^6.0.1",
     "raspi-soft-pwm": "^6.0.2"
   }
