@@ -160,9 +160,9 @@ init(() => {
     function curvatureDrive(rawX, rawY, allowTurnInPlace = true) {
 
         const [speed, rotation] = [rawX, rawY].map(applyDeadband).map(clamp).map(magnifyInputs);
-        const [leftSpeed, rightSpeed] = desaturate([speed - rotation, speed + rotation], [speed, rotation]);
+        const [leftSpeed, rightSpeed] = desaturate([speed - rotation, speed + rotation], [speed, rotation], 'curvature');
         if (!allowTurnInPlace) [leftSpeed, rightSpeed] = desaturate([speed - Math.abs(speed) * rotation,
-        speed + Math.abs(rotation)], [speed, rotation], 'curvature');
+        speed + Math.abs(rotation) * rotation], [speed, rotation], 'curvature');
 
         setMotors(leftSpeed, rightSpeed);
     };
