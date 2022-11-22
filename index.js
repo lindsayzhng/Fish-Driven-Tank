@@ -37,8 +37,6 @@ init(() => {
         console.log(`Capy listening on port ${port}`)
     });
 
-    function normalize() { }; // if read from motors
-
     /**
      * Ignore input values if it is within a specified range around zero. 
      * 
@@ -66,14 +64,41 @@ init(() => {
     };
 
     /**
+     * Get value clamped between a high and low boundary.
+     * 
+     * @param {number} value value needs to be clamped
+     * @param {number} low low boundary
+     * @param {number} high high boundary
+     * @returns clamped value
+     */
+    function clamp(value, low = constants.Raw.MIN_INPUT, high = constants.Raw.MAX_INPUT) {
+        return Math.max(low, Math.min(value, high));
+    }
+
+    /**
      * Amplify input values.
      * 
      * @param {number} value input
-     * @param {number} mult degree of amplification
+     * @param {number} magnitude degree of amplification
      * @returns 
      */
-    function magnifyInput(value, mult = constants.Raw.MAGNIFY_MULT) { // TODO: change how the input is amplified
-        return Math.sign(value) * value * mult;
+    function magnifyInputs(value, magnitude = constants.Raw.MAGNIFY_DEGREE) {
+        return Math.sign(value) * (value ** magnitude);
+    }
+
+    /**
+     * 
+     * @param {*} param0 
+     * @param {*} param1 
+     * @returns 
+     */
+    function desaturate([leftSpeed, rightSpeed], [speed, rotation]) {
+        const max = Math.max(Math.abs(speed), Math.abs(rotation));
+        const min = Math.min(Math.abs(speed), Math.abs(rotation));
+
+        if (!max) return [0, 0];
+        const saturatedInput = (max + min) / max;
+        return [leftSpeed / saturatedInput, rightSpeed / saturatedInput];
     }
 
     /**
@@ -97,13 +122,11 @@ init(() => {
     };
 
     function arcadeDrive(rawX, rawY) {
-        speed = applyDeadband(rawX);
-        rotation = applyDeadband(rawY);
 
-        // inverse kinematics for differential drive
+        const [speed, rotation] = [rawX, rawY].map(applyDeadband).map(magnifyInputs);
+        const [leftSpeed, rightSpeed] = desaturate([speed - rotation, speed + rotation], [speed, rotation]);
 
-        setMotors();
-
+        setMotors(leftSpeed, rightSpeed);
     };
 
     function curvatureDrive(rawX, rawY) { };

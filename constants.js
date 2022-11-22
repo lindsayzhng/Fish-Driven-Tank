@@ -13,7 +13,9 @@ export const Motors = {
 
 export const Raw = { // up to change
 
+    MAX_INPUT: 1,
+    MIN_INPUT: -1,
     INPUT_DEADBAND: 0.05,
-    MAGNIFY_MULT: 5,
+    MAGNIFY_DEGREE: 3,
 
 };
