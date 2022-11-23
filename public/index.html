@@ -1,62 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>Capy</title>
-    <meta name="description" content="A FeathersJS server">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="./index.js"></script>
-  </head>
-  <style>
-    .fire {
-      height:200px;
-        background-color: red;
-        width: 200px;
-        font-size: 20px; 
-        padding: 10px;
-        border-radius: 5px;
-        border: 3px solid yellow; 
-        color: white;
-        cursor: pointer;
-      }
-      .fire:active{
-        background-color: darkred
-      }
-      .move {
-        height:200px;
-        background-color: green;
-        width: 200px;
-        font-size: 20px; 
-        padding: 10px;
-        border-radius: 5px;
-        border: 3px solid blue; 
-        color: white;
-        cursor: pointer;
-      }
-      .move:active {
-        background-color: darkgreen;
-      }
-      .center {
-        display: flex;
-        justify-content: center;
-        width: 600px;
-      }
-      </style>
-  <body>
-    <main class="container">
-      <h1>Capy Test</h1>
-      <div class="center">
-        <button onmousedown="moveV(0.15)" onmouseup="moveV(0)" class="move">U</button>
-      </div>
-      <div class="center">
-        <button onmousedown="turn(-0.2)" onmouseup="turn(0)"  class="move">L</button>
-        <button class="fire" onclick="shoot()">Fire!</button>
-        <button onmousedown="turn(0.2)" onmouseup="turn(0)" class="move">R</button>
-      </div>
-      <div class="center">
-        <button onmousedown="moveV(-0.15)" onmouseup="moveV(0)" class="move">D</button>
-      </div>
-      <!--Use negative parameter for left and down-->
 
-    </main>
-  </body>
+<head>
+  <title>Capy</title>
+  <meta name="description" content="A FeathersJS server">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="./joy.min.js"></script>
+</head>
+<style>
+  .fire {
+    height: 200px;
+    background-color: red;
+    width: 200px;
+    font-size: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 3px solid yellow;
+    color: white;
+    cursor: pointer;
+  }
+
+  .fire:active {
+    background-color: darkred
+  }
+
+  .move {
+    height: 200px;
+    background-color: green;
+    width: 200px;
+    font-size: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 3px solid blue;
+    color: white;
+    cursor: pointer;
+  }
+
+  .move:active {
+    background-color: darkgreen;
+  }
+
+  .center {
+    display: flex;
+    justify-content: center;
+    width: 100vw;
+  }
+</style>
+
+<body>
+  <main class="container">
+    <h1>Capy Test</h1>
+    <!--<img src="http://localhost:3030/stream.mjpg" />-->
+      <div class="center">
+    <div id="joyDiv" style="width:400px;height:350px;margin-bottom:30px;"></div>
+    </div>
+  </main>
+</body>
+<script src="./index.js"></script>
+
 </html>
