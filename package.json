@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "sudo node index.js",
-    "dev": "node index.js"
+    "start": "sudo node server.js",
+    "dev": "node server.js"
   },
   "repository": {
     "type": "git",
