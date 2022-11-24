@@ -2,7 +2,10 @@ let lock = true;
 
 function handleLock(el) {
   lock = el.checked;
-  console.log(lock);
+  if(lock==true){
+  console.log("lock");}
+  if(lock==false){
+    console.log("unlock");}
 }
 
 var joy = new JoyStick('joyDiv', {}, function (stickData) {
