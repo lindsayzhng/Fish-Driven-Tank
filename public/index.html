@@ -9,9 +9,9 @@
 </head>
 <style>
   .fire {
-    height: 200px;
+    height: 80px;
     background-color: red;
-    width: 200px;
+    width: 300px;
     font-size: 20px;
     padding: 10px;
     border-radius: 5px;
@@ -45,6 +45,55 @@
     justify-content: center;
     width: 100vw;
   }
+  h1 {
+        color: green;
+    }
+           
+    /* toggle in label designing */
+    .toggle {
+        position : relative ;
+        display : inline-block;
+        width : 100px;
+        height : 52px;
+        background-color: red;
+        border-radius: 30px;
+        border: 2px solid gray;
+    }
+           
+    /* After slide changes */
+    .toggle:after {
+        content: '';
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: gray;
+        top: 1px;
+        left: 1px;
+        transition:  all 0.5s;
+    }
+           
+    /* Toggle text */
+    p {
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: bold;
+    }
+           
+    /* Checkbox checked effect */
+    .checkbox:checked + .toggle::after {
+        left : 49px;
+      
+    }
+           
+    /* Checkbox checked toggle label bg color */
+    .checkbox:checked + .toggle {
+        background-color: green;
+    }
+           
+    /* Checkbox vanished */
+    .checkbox {
+        display : none;
+    }
 </style>
 
 <body>
@@ -52,10 +101,35 @@
     <h1>Capy Test</h1>
     <!--<img src="http://localhost:3030/stream.mjpg" />-->
       <div class="center">
-    <div id="joyDiv" style="width:400px;height:350px;margin-bottom:30px;"></div>
+    <div id="joyDiv" style="width:400px;height:350px;margin-bottom:20px;"></div>
     </div>
+    <div class="center">
+      <button class="fire" onclick="drive(0,0,true)">Emergency Stop</button>
+    </div>
+   
+    <input type="checkbox" id="switch"
+    class="checkbox" />
+<label for="switch" class="toggle">
+<p>ON   LOCK</p>
+</label>
   </main>
 </body>
+<script>
+  lock = false;
+  const el = document.getElementById("switch");
+  el.addEventListener("click", function(){
+    if(lock==false){
+      lock=true;
+      drive(0,0,true);
+    }
+    else{
+      lock=false;
+      drive(0,0,false);
+    }
+  })
+
+  </script>
 <script src="./index.js"></script>
+
 
 </html>
