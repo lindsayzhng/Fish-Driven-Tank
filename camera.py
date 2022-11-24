@@ -5,7 +5,6 @@ import numpy as np
 app = Flask(__name__)
 
 lower = np.array([90,130,170], dtype = "uint8") 
-
 upper= np.array([190,220,250], dtype = "uint8")
 
 vid = cv2.VideoCapture(0)
@@ -17,13 +16,12 @@ for local webcam use cv2.VideoCapture(0)
 '''
 
 def gen_frames():
+    while(True):
         success, frame = vid.read()
         
         if not success:
             return
         else:
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
             
             mask = cv2.inRange(frame, lower, upper)
             output = cv2.bitwise_and(frame, frame, mask = mask)
@@ -38,18 +36,19 @@ def gen_frames():
             
             for cntr in contours:
                 x, y, w, h = cv2.boundingRect(cntr)
-                if not(w<475 and w>300 and h<150 and h>75):
+                if not(w<1000 and w>300 and h<1000 and h>75):
                     continue
 
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
+                cv2.rectangle(output, (x, y), (x+w, y+h), (0, 0, 255), 2)
 
                 centerx = (x+(w/2))
                 centery = (y+(h/2))
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                cv2.putText(frame, str(centerx)+', '+str(centery),(x,y), font, 1, (255, 0,0),2)
+                cv2.putText(output, str(centerx)+', '+str(centery),(x,y), font, 1, (255, 0,0),2)
             
-            return (b'--frame\r\n'
-                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  
+            success, buffer = cv2.imencode('.jpg', output)
+            yield (b'--frame\r\n'
+                    b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')  
         #cv2.imshow('frame', np.hstack([frame, output]))
         
         
@@ -62,4 +61,4 @@ def video_feed():
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=3000)
