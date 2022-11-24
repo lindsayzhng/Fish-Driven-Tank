@@ -25,28 +25,24 @@ try {
         const leftMotorForward = new SoftPWM(constants.Motors.LEFT_FORWARD);
         const leftMotorBackward = new SoftPWM(constants.Motors.LEFT_BACKWARD);
 
-        const driver = {
-            mode: 'arcade',
-
-            get getMode() { return this.mode; },
-            set setMode(newMode) { this.mode = newMode; }
-        };
-
-        const caller = {
-            current: 'Joystick',
-
-            get getCurrent() { return this.current; },
-            set setCurrent(newCaller) { this.current = newCaller; }
-        };
-
         app.post('/drive', (req, res) => {
-            const { rawX, rawY, lock, call } = req.body;
+            const { rawX, rawY, lock, caller } = req.body;
             console.log(req.body);
 
-            caller.setCurrent = call;
+            const driveMode = 'arcade';
 
             if (lock) lockWheels();
-            switch (driver.getMode) {
+
+            switch (caller) {
+                case 'Joystick':
+                    // import
+                    break;
+                case 'Fish':
+                    // import
+                    break;
+            }
+
+            switch (driveMode) {
                 case 'arcade':
                     arcadeDrive(rawX, rawY);
                     break;
