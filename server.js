@@ -106,8 +106,7 @@ try {
          */
         function filterRaw(rawInput, fArr, caller) {
 
-            if (caller === 'Fish') return rawInput.map(n => fArr.reduce((f, curr) => f(curr, constants.Fish), n));
-            return rawInput.map(n => fArr.reduce((f, curr) => f(curr, constants.Joystick), n));
+            return rawInput.map(n => fArr.reduce((f, curr) => f(curr, constants[caller]), n));
         }
 
         /**
