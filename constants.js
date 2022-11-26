@@ -22,7 +22,23 @@ const Raw = {  // up to change
     },
 };
 
+const Joystick = {
+    MAX_INPUT: 1,
+    MIN_INPUT: -1,
+    INPUT_DEADBAND: 0.05,
+    MAGNIFY_DEGREE: 3,
+}
+
+const Fish = {
+    MAX_INPUT: 1,
+    MIN_INPUT: -1,
+    INPUT_DEADBAND: 0.05,
+    MAGNIFY_DEGREE: 3,
+}
+
 module.exports = {
     Motors,
     Raw,
+    Joystick,
+    Fish
 }

@@ -54,7 +54,8 @@ try {
          * @param {number} maxMagnitude maximum magnitude of input
          * @returns value after deadband applied
          */
-        function applyDeadband(value, deadband = constants.Raw.INPUT_DEADBAND, maxMagnitude = 1) { // TODO: change max magnitude value
+        function applyDeadband(value, caller, maxMagnitude = 1) { // TODO: change max magnitude value
+            deadband = caller.INPUT_DEADBAND;
             if (Math.abs(value) < deadband) return 0;
 
             // Map deadband to 0 and map max to max.
@@ -80,8 +81,8 @@ try {
          * @param {number} high high boundary
          * @returns clamped value
          */
-        function clamp(value, low = constants.Raw.MIN_INPUT, high = constants.Raw.MAX_INPUT) {
-            return Math.max(low, Math.min(value, high));
+        function clamp(value, caller) {
+            return Math.max(caller.MIN_INPUT, Math.min(value, caller.MAX_INPUT));
         }
 
         /**
@@ -91,13 +92,23 @@ try {
          * @param {number} magnitude degree of amplification
          * @returns 
          */
-        function magnifyInputs(value, magnitude = constants.Raw.MAGNIFY_DEGREE) {
-            return Math.sign(value) * Math.abs(value ** magnitude);
+        function magnifyInputs(value, caller) {
+            return Math.sign(value) * Math.abs(value ** caller.MAGNIFY_DEGREE);
         }
 
-        // function filterRaw(rawInput, fArr, caller) {
-        //     return rawInput.map(x, caller => f(x))
-        // }
+        /**
+         * Filter raw input values based on caller.
+         * 
+         * @param {Array} rawInput raw input (x, y)
+         * @param {Array} fArr array of functions to filter raw
+         * @param {String} caller caller of the driver
+         * @returns 
+         */
+        function filterRaw(rawInput, fArr, caller) {
+
+            if (caller === 'Fish') return rawInput.map(n => fArr.reduce((f, curr) => f(curr, constants.Fish), n));
+            return rawInput.map(n => fArr.reduce((f, curr) => f(curr, constants.Joystick), n));
+        }
 
         /**
          * 
@@ -128,8 +139,8 @@ try {
          * @param {number} rightSpeed 
          */
         function setMotors(leftSpeed, rightSpeed) {
-            leftSpeed = leftSpeed > constants.Motors.MAX_VOLTAGE ? constants.Motors.MAX_VOLTAGE : leftSpeed;
-            rightSpeed = rightSpeed > constants.Motors.MAX_VOLTAGE ? constants.Motors.MAX_VOLTAGE : rightSpeed;
+            leftSpeed = Math.min(Math.abs(leftSpeed), constants.Motors.MAX_VOLTAGE);
+            rightSpeed = Math.min(Math.abs(rightSpeed), constants.Motors.MAX_VOLTAGE);
 
             leftMotorForward.write(leftSpeed > 0 ? leftSpeed : 0)
             leftMotorBackward.write(leftSpeed < 0 ? -leftSpeed : 0);
