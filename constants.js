@@ -1,4 +1,3 @@
-// change file to type module in html
 module.exports = {
     Motors: {
         RIGHT_FORWARD: 'GPIO18',
@@ -9,9 +8,27 @@ module.exports = {
         MAX_VOLTAGE: 0.3, // max power: 30%
     },
     Raw: { // up to change
+
         MAX_INPUT: 1,
         MIN_INPUT: -1,
+
         INPUT_DEADBAND: 0.05,
         MAGNIFY_DEGREE: 3,
-    }
+    },
+    // Fish: { // up to change
+
+    //     MAX_INPUT: 1,
+    //     MIN_INPUT: -1,
+
+    //     INPUT_DEADBAND: 0.05,
+    //     MAGNIFY_DEGREE: 3,
+    // },
+    // Joystick: { // up to change
+
+    //     MAX_INPUT: 1,
+    //     MIN_INPUT: -1,
+
+    //     INPUT_DEADBAND: 0.05,
+    //     MAGNIFY_DEGREE: 3,
+    // }
 }

@@ -9,9 +9,9 @@
 </head>
 <style>
   .fire {
-    height: 200px;
+    height: 80px;
     background-color: red;
-    width: 200px;
+    width: 300px;
     font-size: 20px;
     padding: 10px;
     border-radius: 5px;
@@ -45,14 +45,73 @@
     justify-content: center;
     width: 100vw;
   }
+
+  h1 {
+    color: green;
+  }
+
+  /* toggle in label designing */
+  .toggle {
+    position: relative;
+    display: inline-block;
+    width: 100px;
+    height: 52px;
+    background-color: green;
+    border-radius: 30px;
+    border: 2px solid gray;
+  }
+
+  /* After slide changes */
+  .toggle:after {
+    content: '';
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: gray;
+    top: 1px;
+    left: 0px;
+    transition: all 0.5s;
+  }
+
+  /* Toggle text */
+  p {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+  }
+
+  /* Checkbox checked effect */
+  .checkbox:checked+.toggle::after {
+    left: 50px;
+
+  }
+
+  /* Checkbox checked toggle label bg color */
+  .checkbox:checked+.toggle {
+    background-color: red;
+  }
+
+  /* Checkbox vanished */
+  .checkbox {
+    display: none;
+  }
 </style>
 
 <body>
   <main class="container">
     <h1>Capy Test</h1>
     <img src="http://localhost:3000/video_feed" style="width:100vw; height:100vh"/>
-      <div class="center">
-    <div id="joyDiv" style="width:400px;height:350px;margin-bottom:30px;"></div>
+    <div class="center">
+      <div id="joyDiv" style="width:400px;height:350px;margin-bottom:20px;"></div>
+    </div>
+    <!-- <div class="center">
+      <button class="fire" onclick="drive(0,0,true)">Emergency Stop</button>
+    </div>-->
+    <div class="center">
+      <input type="checkbox" id="switch" class="checkbox" onclick="handleLock(this)" />
+      <label for="switch" class="toggle">
+        <p>LOCK ON</p>
+      </label>
     </div>
   </main>
 </body>
