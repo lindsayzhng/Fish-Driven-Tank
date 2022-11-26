@@ -19,6 +19,7 @@ try {
     //   encoding: 'JPEG',
     //   quality: 7 //lower is faster
     // }, '/stream.mjpg', true);
+
     init(() => {
         const rightMotorForward = new SoftPWM(constants.Motors.RIGHT_FORWARD);
         const rightMotorBackward = new SoftPWM(constants.Motors.RIGHT_BACKWARD);
@@ -33,21 +34,12 @@ try {
 
             if (lock) lockWheels();
 
-            switch (caller) {
-                case 'Joystick':
-                    // import
-                    break;
-                case 'Fish':
-                    // import
-                    break;
-            }
-
             switch (driveMode) {
                 case 'arcade':
-                    arcadeDrive(rawX, rawY);
+                    arcadeDrive(rawX, rawY, caller);
                     break;
                 case 'curvature':
-                    curvatureDrive(rawX, rawY, true);
+                    curvatureDrive(rawX, rawY, caller, true);
                     break;
             }
 
@@ -103,6 +95,10 @@ try {
             return Math.sign(value) * Math.abs(value ** magnitude);
         }
 
+        // function filterRaw(rawInput, fArr, caller) {
+        //     return rawInput.map(x, caller => f(x))
+        // }
+
         /**
          * 
          * @param {*} param0 
@@ -132,6 +128,9 @@ try {
          * @param {number} rightSpeed 
          */
         function setMotors(leftSpeed, rightSpeed) {
+            leftSpeed = leftSpeed > constants.Motors.MAX_VOLTAGE ? constants.Motors.MAX_VOLTAGE : leftSpeed;
+            rightSpeed = rightSpeed > constants.Motors.MAX_VOLTAGE ? constants.Motors.MAX_VOLTAGE : rightSpeed;
+
             leftMotorForward.write(leftSpeed > 0 ? leftSpeed : 0)
             leftMotorBackward.write(leftSpeed < 0 ? -leftSpeed : 0);
             rightMotorForward.write(rightSpeed > 0 ? rightSpeed : 0);
@@ -151,13 +150,12 @@ try {
          * @param {number} rawX raw x input
          * @param {number} rawY raw y input
          */
-        function arcadeDrive(rawX, rawY) {
+        function arcadeDrive(rawX, rawY, caller) {
 
-            const [rotation, speed] = [rawX, rawY].map(x => applyDeadband(x)).map(x => clamp(x)).map(x => magnifyInputs(x));
-            // console.log({ rotation, speed });
+            // const [rotation, speed] = [rawX, rawY].map(x => applyDeadband(x)).map(x => clamp(x)).map(x => magnifyInputs(x));
+            const [rotation, speed] = filterRaw([rawX, rawY], [applyDeadband, clamp, magnifyInputs], caller)
             const [leftSpeed, rightSpeed] = desaturate([speed + rotation, speed - rotation], [speed, rotation], 'arcade');
 
-            // console.log("Motors: ", leftSpeed, rightSpeed);
             setMotors(leftSpeed, rightSpeed);
         };
 
@@ -167,7 +165,7 @@ try {
          * @param {number} rawX raw x input
          * @param {number} rawY raw y input
          */
-        function curvatureDrive(rawX, rawY, allowTurnInPlace = true) {
+        function curvatureDrive(rawX, rawY, caller, allowTurnInPlace = true) {
 
             const [speed, rotation] = [rawX, rawY].map(x => applyDeadband(x)).map(x => clamp(x)).map(x => magnifyInputs(x));
             const [leftSpeed, rightSpeed] = desaturate(
