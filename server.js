@@ -51,12 +51,12 @@ try {
          * Ignore input values if it is within a specified range around zero. 
          * 
          * @param {number} value input
-         * @param {number} deadband specified range around zero
+         * @param {Object} caller caller of input
          * @param {number} maxMagnitude maximum magnitude of input
          * @returns value after deadband applied
          */
         function applyDeadband(value, caller, maxMagnitude = 1) { // TODO: change max magnitude value
-            deadband = caller.INPUT_DEADBAND;
+            const deadband = caller.INPUT_DEADBAND;
             if (Math.abs(value) < deadband) return 0;
 
             // Map deadband to 0 and map max to max.
@@ -75,23 +75,34 @@ try {
         };
 
         /**
-         * Get value clamped between a high and low boundary.
+         * Get value clamped between a high and low boundary, used when boundary set have different signs.
          * 
          * @param {number} value value needs to be clamped
-         * @param {number} low low boundary
-         * @param {number} high high boundary
-         * @returns clamped value
+         * @param {Object} caller caller of input
+         * @return clamped value
          */
         function clamp(value, caller) {
             return Math.max(caller.MIN_INPUT, Math.min(value, caller.MAX_INPUT));
         }
 
         /**
+         * Get value clamped between an absolute high and low boundary. 
+         * Between [x, y] or [-x, -y], used when boundary set both have the same signs.
+         * 
+         * @param {number} value value needs to be clamped
+         * @param {Object} caller caller of input
+         * @return clamped value
+         */
+        function clampAbsolute(value, caller) {
+            return Math.sign(value) * Math.max(caller.MIN_INPUT, Math.max(Math.abs(value), caller.MAX_INPUT));
+        }
+
+        /**
          * Amplify input values.
          * 
          * @param {number} value input
-         * @param {number} magnitude degree of amplification
-         * @returns 
+         * @param {Object} caller caller of input
+         * @returns magnified input
          */
         function magnifyInputs(value, caller) {
             return Math.sign(value) * (Math.abs(value) ** caller.MAGNIFY_DEGREE);
@@ -138,8 +149,8 @@ try {
          * @param {number} rightSpeed 
          */
         function setMotors(leftSpeed, rightSpeed) {
-            leftSpeed = clamp(leftSpeed, constants.Motors);
-            rightSpeed = clamp(rightSpeed, constants.Motors);
+            leftSpeed = clampAbsolute(leftSpeed, constants.Motors);
+            rightSpeed = clampAbsolute(rightSpeed, constants.Motors);
 
             console.log(leftSpeed, rightSpeed);
 
