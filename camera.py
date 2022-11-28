@@ -9,30 +9,54 @@ import numpy as np
 import json
 import requests
 
-app = Flask(__name__)
+# max resolution for video - number of pixels
+FRAME_WIDTH = 1920
+FRAME_HEIGHT = 1080
 
-lower = np.array([90, 130, 170], dtype="uint8")
-upper = np.array([190, 220, 250], dtype="uint8")
+FRAMERATE = 15
+BRIGHTNESS = 50
+
+# coordinate of center of tank in respect to coordinate of center of image
+X_OFFSET = 0
+Y_OFFSET = 0
+
+GAUSSIAN_KERNEL = (5, 5)
+GAUSSIAN_SIGMA = 1
+
+CANNY_LOWER_THRESHOLD = 128
+CANNY_UPPER_THRESHOLD = 255
+
+DILATE_KERNEL = (5, 5)
+ERODE_KERNEL = (5, 5)
+
+CONTOUR_COLOR = (0, 255, 0)
+CONTOUR_THICKNESS = 2
+CONTOUR_MIN_AREA = 200
+
+
+app = Flask(__name__)
 
 # add picamera module
 camera = PiCamera()
-camera.resolution = (1920, 1080)  # max resolution for video
-camera.framerate = 15  # frame rate has to be 15 to enable max resolution
-camera.brightness = 50  # default
+camera.resolution = (FRAME_WIDTH, FRAME_HEIGHT)
+camera.framerate = FRAMERATE  # frame rate has to be 15 to enable max resolution
+camera.brightness = BRIGHTNESS  # default
 
-# unfinished - infrared camera instead of rgb
-raw_capture = PiRGBArray(camera, size=(1920, 1080))
+raw_capture = PiRGBArray(camera, size=(FRAME_WIDTH, FRAME_HEIGHT))
 
 
 def filter_img(img):
     # change color conversion code
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img_blur = cv2.GaussianBlur(img_gray, (5, 5), 1)
-    img_canny = cv2.Canny(img_blur, 128, 255)
+    img_blur = cv2.GaussianBlur(img_gray, GAUSSIAN_KERNEL, GAUSSIAN_SIGMA)
+    img_canny = cv2.Canny(img_blur, CANNY_LOWER_THRESHOLD,
+                          CANNY_UPPER_THRESHOLD)
     # order of dilation and erosion can be changed if needed
     # erosion -> dilation if needs to disconnect boundaries
-    img_dilate = cv2.dilate(img_canny, np.ones((5, 5), np.uint8), iterations=1)
-    img_erode = cv2.erode(img_dilate, np.ones((5, 5), np.uint8), iterations=1)
+    img_dilate = cv2.dilate(img_canny, np.ones(
+        DILATE_KERNEL, np.uint8), iterations=1)
+    img_erode = cv2.erode(img_dilate, np.ones(
+        ERODE_KERNEL, np.uint8), iterations=1)
     return img_erode
 
 
@@ -40,7 +64,7 @@ def draw_rect(img, cnt):
     rect = cv2.minAreaRect(cnt)
     box = cv2.boxPoints(rect)
     box = np.int0(box)
-    cv2.drawContours(img, [box], 0, (0, 0, 255), 2)
+    cv2.drawContours(img, [box], 0, CONTOUR_COLOR, CONTOUR_THICKNESS)
 
 
 def get_centroid(cnt):
@@ -50,12 +74,8 @@ def get_centroid(cnt):
     return (cx, cy)
 
 
-# unfinished - change scale into a function
-def map_coordinate(cx, cy, width, height, img):
-    scale_x = '''from img_width to fish tank width'''
-    scale_y = '''from img_height to fish tank height'''
-
-    return (cx * scale_x / width * 2 - 1, cy * scale_y / height * 2 - 1)
+def map_coordinate(cx, cy):  # assume that centroid coordinate in pixel unit
+    return ((cx + X_OFFSET) / FRAME_WIDTH * 2 - 1, (cy + Y_OFFSET) / FRAME_HEIGHT * 2 - 1)
 
 
 def drive(raw_x, raw_y, caller='Fish', drive_mode='arcade'):
@@ -71,10 +91,6 @@ def gen_frames_pi():
         img_contour = img.copy()
         img_rect = img.copy()
 
-        # fish tank width and height - actual value needs to be tested
-        width = 500
-        height = 500
-
         # get contour
         contours = cv2.findContours(
             filter_img(img_contour), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # change to CHAIN_APPROX_NONE if necessary
@@ -83,15 +99,18 @@ def gen_frames_pi():
         for cnt in contours:
             area = cv2.contourArea(cnt)
             print("area: " + str(area))
-            if area > 200:  # draw contour if area bigger than certain threshold
-                cv2.drawContours(img_contour, cnt, -1, (0, 255, 0), 2)
+
+            if area > CONTOUR_MIN_AREA:  # draw contour if area bigger than certain threshold
+                cv2.drawContours(img_contour, cnt, -1,
+                                 CONTOUR_COLOR, CONTOUR_THICKNESS)
                 draw_rect(img_rect, cnt)
 
                 (raw_cx, raw_cy) = get_centroid(cnt)
-                print("raw centroid x: " + str(raw_cx) +
-                      "; raw centroid y: " + str(raw_cy))
-                (cx, cy) = map_coordinate(raw_cx, raw_cy, width, height, img)
-                print("centroid x: " + str(cx) + "; centroid y: " + str(cy))
+                print("raw cx: " + str(raw_cx) + "; raw cy: " + str(raw_cy))
+
+                (cx, cy) = map_coordinate(raw_cx, raw_cy)
+                print("cx: " + str(cx) + "; cy: " + str(cy))
+
                 drive(cx, cy)
 
         cv2.imshow("Original Image", img)
@@ -101,10 +120,13 @@ def gen_frames_pi():
         # truncate and clear stream for next iteration
         raw_capture.truncate(0)
 
-        if cv2.waitKey(15) & 0xFF == ord('q'):  # tune wait time based on frame rate
+        if cv2.waitKey(FRAMERATE) & 0xFF == ord('q'):  # tune wait time based on frame rate
             camera.close()
             break
 
+
+lower = np.array([90, 130, 170], dtype="uint8")
+upper = np.array([190, 220, 250], dtype="uint8")
 
 vid = cv2.VideoCapture(0)
 cv2.namedWindow('frame')
