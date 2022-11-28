@@ -1,4 +1,5 @@
-# max resolution for video - number of pixels
+# all constants need to be tuned
+# max resolution for video - number of pixels (size of frame)
 FRAME_WIDTH = 1920
 FRAME_HEIGHT = 1080
 
@@ -9,13 +10,17 @@ BRIGHTNESS = 50
 X_OFFSET = 0
 Y_OFFSET = 0
 
+# matrix of pixels - entries must be positive odd integer
 GAUSSIAN_KERNEL = (5, 5)
-GAUSSIAN_SIGMA = 1
+GAUSSIAN_SIGMA = 1  # standard deviation r**2 - degree of significance of pixel in kernel
 
+# connect lines based on context between lower and upper threshold
 CANNY_LOWER_THRESHOLD = 128
-CANNY_UPPER_THRESHOLD = 255
+CANNY_UPPER_THRESHOLD = 255  # edge detection at upper threshold
 
+# matrix of pixels - entries must be positive odd integer
 DILATE_KERNEL = (5, 5)
+# matrix of pixels - entries must be positive odd integer
 ERODE_KERNEL = (5, 5)
 
 CONTOUR_COLOR = (0, 255, 0)

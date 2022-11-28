@@ -12,15 +12,6 @@ try {
     const { SoftPWM } = require('raspi-soft-pwm');
     const { init } = require('raspi');
 
-    // const videoStream = require('raspberrypi-node-camera-web-streamer');
-    // videoStream.acceptConnections(app, {
-    //   width: 1280,
-    //   height: 720,
-    //   fps: 16,
-    //   encoding: 'JPEG',
-    //   quality: 7 //lower is faster
-    // }, '/stream.mjpg', true);
-
     init(() => {
         const rightMotorForward = new SoftPWM(constants.Motors.RIGHT_FORWARD);
         const rightMotorBackward = new SoftPWM(constants.Motors.RIGHT_BACKWARD);
@@ -37,6 +28,8 @@ try {
             console.log(req.body);
 
             if (caller === 'Joystick') constants.DefaultInput.lock = lock;
+
+            // manage different callers at the same time
 
             if (lock) lockWheels();
             else driveModes[driveMode](rawX, rawY, caller);

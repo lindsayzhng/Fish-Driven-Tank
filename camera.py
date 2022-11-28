@@ -60,6 +60,7 @@ def drive(raw_x, raw_y, caller='Fish', drive_mode='arcade'):
     data = json.dumps({raw_x, raw_y, caller,
                       drive_mode}, separators=(',', ':'))
     requests.post('/drive', data)
+    # finish fetch
 
 
 def gen_frames_pi():
