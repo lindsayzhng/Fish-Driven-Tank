@@ -6,6 +6,8 @@ from picamera import PiCamera
 
 import cv2
 import numpy as np
+import json
+import requests
 
 app = Flask(__name__)
 
@@ -33,28 +35,73 @@ def filter_img(img):
     return img_erode
 
 
+def draw_rect(img, cnt):
+    rect = cv2.minAreaRect(cnt)
+    box = cv2.boxPoints(rect)
+    box = np.int0(box)
+    cv2.drawContours(img, [box], 0, (0, 0, 255), 2)
+
+
+def get_centroid(cnt):
+    M = cv2.moments(cnt)
+    cx = int(M['m10']/M['m00'])
+    cy = int(M['m01']/M['m00'])
+    return (cx, cy)
+
+
+# unfinished - change scale into a function
+def map_coordinate(cx, cy, width, height, img):
+    scale_x = '''from img_width to fish tank width'''
+    scale_y = '''from img_height to fish tank height'''
+
+    return (cx * scale_x / width * 2 - 1, cy * scale_y / height * 2 - 1)
+
+
+def drive(raw_x, raw_y, lock=None, caller='Fish', driveMode='arcade'):
+    data = json.dumps({raw_x, raw_y, lock, caller,
+                      driveMode}, separators=(',', ':'))
+    requests.post('/drive', data)
+
+
 def gen_frames_pi():
     # display video
     for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
         img = frame.array
         img_contour = img.copy()
+        img_rect = img.copy()
+
+        # fish tank width and height - actual value needs to be tested
+        width = 500
+        height = 500
 
         # get contour
         contours = cv2.findContours(
-            filter_img(img_contour), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # change to none if necessary
+            filter_img(img_contour), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # change to CHAIN_APPROX_NONE if necessary
         contours = contours[0] if len(contours) == 2 else contours[1]
 
         for cnt in contours:
             area = cv2.contourArea(cnt)
             print("area: " + str(area))
-            if area > 200:
-                cv2.drawContours(img_contour, cnt, -1, (0, 255, 0), 3)
+            if area > 200:  # draw contour if area bigger than certain threshold
+                cv2.drawContours(img_contour, cnt, -1, (0, 255, 0), 2)
+                draw_rect(img_rect, cnt)
+
+                (raw_cx, raw_cy) = get_centroid(cnt)
+                print("raw centroid x: " + str(raw_cx) +
+                      "; raw centroid y: " + str(raw_cy))
+                (cx, cy) = map_coordinate(raw_cx, raw_cy, width, height, img)
+                print("centroid x: " + str(cx) + "; centroid y: " + str(cy))
+                drive(cx, cy)
 
         cv2.imshow("Original Image", img)
         cv2.imshow("Contour Detection", img_contour)
+        cv2.imshow("Rectangle Detection", img_rect)
 
+        # truncate and clear stream for next iteration
         raw_capture.truncate(0)
+
         if cv2.waitKey(15) & 0xFF == ord('q'):  # tune wait time based on frame rate
+            camera.close()
             break
 
 
@@ -111,6 +158,7 @@ def gen_frames():
 @app.route('/video_feed')
 def video_feed():
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    # return Response(gen_frames_pi(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 if __name__ == "__main__":

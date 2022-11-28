@@ -4,6 +4,7 @@
         "deadband",
         "GPIO",
         "imshow",
-        "picamera"
+        "picamera",
+        "raspi"
     ]
 }

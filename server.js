@@ -36,6 +36,8 @@ try {
             const { rawX, rawY, lock, caller, driveMode } = { ...constants.DefaultInput, ...req.body };
             console.log(req.body);
 
+            // fish - does not change lock
+            // joystick - change based on lock
             if (lock) {
                 lockWheels();
                 res.send(200);
@@ -72,7 +74,7 @@ try {
 
             return value > 0 ? maxMagnitude * (value - deadband) / (maxMagnitude - deadband)
                 : maxMagnitude * (value + deadband) / (maxMagnitude - deadband);
-        };
+        }
 
         /**
          * Get value clamped between a high and low boundary, used when boundary set have different signs.
@@ -165,7 +167,7 @@ try {
          */
         function lockWheels() {
             setMotors(0, 0);
-        };
+        }
 
         /**
          * Arcade drive of the robot.
@@ -180,7 +182,7 @@ try {
             const [leftSpeed, rightSpeed] = desaturate([speed + rotation, speed - rotation], [speed, rotation], 'arcade');
 
             setMotors(leftSpeed, rightSpeed);
-        };
+        }
 
         /**
          * Curvature drive of the robot.
@@ -200,7 +202,7 @@ try {
             console.log(leftSpeed, rightSpeed);
 
             setMotors(leftSpeed, rightSpeed);
-        };
+        }
     });
 } catch (e) {
 
