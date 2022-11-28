@@ -33,18 +33,13 @@ try {
         };
 
         app.post('/drive', (req, res) => {
-            const { rawX, rawY, lock, caller, driveMode } = { ...constants.DefaultInput, ...req.body };
+            const { rawX, rawY, caller, driveMode, lock } = { ...constants.DefaultInput, ...req.body };
             console.log(req.body);
 
-            // fish - does not change lock
-            // joystick - change based on lock
-            if (lock) {
-                lockWheels();
-                res.send(200);
-                return;
-            }
+            if (caller === 'Joystick') constants.DefaultInput.lock = lock;
 
-            driveModes[driveMode](rawX, rawY, caller);
+            if (lock) lockWheels();
+            else driveModes[driveMode](rawX, rawY, caller);
 
             res.send(200);
         })

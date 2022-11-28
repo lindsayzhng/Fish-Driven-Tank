@@ -11,9 +11,9 @@ const Motors = {
 const DefaultInput = {
     rawX: 0,
     rawY: 0,
-    lock: false,
     caller: 'Joystick',
-    driveMode: 'arcade'
+    driveMode: 'arcade',
+    lock: false,
 }
 
 const Joystick = {

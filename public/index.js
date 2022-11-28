@@ -23,6 +23,6 @@ function drive(rawX, rawY, lock, caller = 'Joystick', driveMode = 'arcade') {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ rawX, rawY, lock, caller, driveMode }),
+    body: JSON.stringify({ rawX, rawY, caller, driveMode, lock }),
   });
 }

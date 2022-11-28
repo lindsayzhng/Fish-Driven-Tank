@@ -20,6 +20,7 @@ camera.resolution = (1920, 1080)  # max resolution for video
 camera.framerate = 15  # frame rate has to be 15 to enable max resolution
 camera.brightness = 50  # default
 
+# unfinished - infrared camera instead of rgb
 raw_capture = PiRGBArray(camera, size=(1920, 1080))
 
 
@@ -57,9 +58,9 @@ def map_coordinate(cx, cy, width, height, img):
     return (cx * scale_x / width * 2 - 1, cy * scale_y / height * 2 - 1)
 
 
-def drive(raw_x, raw_y, lock=None, caller='Fish', driveMode='arcade'):
-    data = json.dumps({raw_x, raw_y, lock, caller,
-                      driveMode}, separators=(',', ':'))
+def drive(raw_x, raw_y, caller='Fish', drive_mode='arcade'):
+    data = json.dumps({raw_x, raw_y, caller,
+                      drive_mode}, separators=(',', ':'))
     requests.post('/drive', data)
 
 
