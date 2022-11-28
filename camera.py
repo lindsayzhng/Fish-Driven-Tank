@@ -1,3 +1,4 @@
+from typing import final
 from flask import Flask, render_template, Response
 
 from picamera.array import PiRGBArray
@@ -11,6 +12,7 @@ app = Flask(__name__)
 lower = np.array([90, 130, 170], dtype="uint8")
 upper = np.array([190, 220, 250], dtype="uint8")
 
+# add picamera module
 camera = PiCamera()
 camera.resolution = (1920, 1080)  # max resolution for video
 camera.framerate = 15  # frame rate has to be 15 to enable max resolution
@@ -18,12 +20,42 @@ camera.brightness = 50  # default
 
 raw_capture = PiRGBArray(camera, size=(1920, 1080))
 
-# for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
-#     img = frame.array
-#     cv2.imshow("Original Image", img)
-#     raw_capture.truncate(0)
-#     if cv2.waitKey(1) & 0xFF==ord('q'):
-#         break
+
+def filter_img(img):
+    # change color conversion code
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_blur = cv2.GaussianBlur(img_gray, (5, 5), 1)
+    img_canny = cv2.Canny(img_blur, 128, 255)
+    # order of dilation and erosion can be changed if needed
+    # erosion -> dilation if needs to disconnect boundaries
+    img_dilate = cv2.dilate(img_canny, np.ones((5, 5), np.uint8), iterations=1)
+    img_erode = cv2.erode(img_dilate, np.ones((5, 5), np.uint8), iterations=1)
+    return img_erode
+
+
+def gen_frames_pi():
+    # display video
+    for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
+        img = frame.array
+        img_contour = img.copy()
+
+        # get contour
+        contours = cv2.findContours(
+            filter_img(img_contour), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # change to none if necessary
+        contours = contours[0] if len(contours) == 2 else contours[1]
+
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            print("area: " + str(area))
+            if area > 200:
+                cv2.drawContours(img_contour, cnt, -1, (0, 255, 0), 3)
+
+        cv2.imshow("Original Image", img)
+        cv2.imshow("Contour Detection", img_contour)
+
+        raw_capture.truncate(0)
+        if cv2.waitKey(15) & 0xFF == ord('q'):  # tune wait time based on frame rate
+            break
 
 
 vid = cv2.VideoCapture(0)
