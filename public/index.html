@@ -8,6 +8,7 @@
   <script src="./joy.min.js"></script>
 </head>
 <style>
+
   .fire {
     height: 80px;
     background-color: red;
@@ -65,7 +66,7 @@
   .toggle:after {
     content: '';
     position: absolute;
-    width: 71px;
+    width: 70px;
     height: 60px;
     border-radius: 42%;
     background-color: gray;
@@ -82,7 +83,7 @@
 
   /* Checkbox checked effect */
   .checkbox:checked+.toggle::after {
-    left: 73px;
+    left: 71px;
 
   }
 
@@ -95,14 +96,24 @@
   .checkbox {
     display: none;
   }
+  body {
+  background-image: url('capyfish1.jpg');
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: 100vw 100vh;
+}
 </style>
 
 <body>
   <main class="container">
-    <h1>Capy Test</h1>
-    <img src="http://localhost:3000/video_feed" style="width:100vw; height:100vh"/>
     <div class="center">
-      <div id="joyDiv" style="width:400px;height:350px;margin-bottom:20px;"></div>
+      <h1>Capy Fish Tank</h1>
+    </div>
+    <div class="center">
+    <img src="http://localhost:3000/video_feed" style="width:50vw; height:28vh"/>
+    </div>
+    <div class="center">
+      <div id="joyDiv" style="width:400px;height:350px;margin-bottom:0px;"></div>
     </div>
     <!-- <div class="center">
       <button class="fire" onclick="drive(0,0,true)">Emergency Stop</button>
@@ -110,7 +121,7 @@
     <div class="center">
       <input type="checkbox" id="switch" class="checkbox" onclick="handleLock(this)" />
       <label for="switch" class="toggle">
-        <pre>  IGNORE       ON
+        <pre> IGNORE    ON
   FISH                 </pre>
       </label>
     </div>
