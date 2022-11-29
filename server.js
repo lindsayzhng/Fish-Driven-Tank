@@ -24,15 +24,13 @@ try {
         };
 
         app.post('/drive', (req, res) => {
-            const { rawX, rawY, caller, driveMode, lock } = { ...constants.DefaultInput, ...req.body };
+            const { rawX, rawY, caller, driveMode, ignoreFish } = { ...constants.DefaultInput, ...req.body };
             console.log(req.body);
 
-            if (caller === 'Joystick') constants.DefaultInput.lock = lock;
+            if (caller === 'Joystick') constants.DefaultInput.ignoreFish = ignoreFish;
 
-            // manage different callers at the same time
-
-            if (lock) lockWheels();
-            else driveModes[driveMode](rawX, rawY, caller);
+            if ((ignoreFish && caller === 'Joystick') || (!ignoreFish && caller === 'Fish'))
+                driveModes[driveMode](rawX, rawY, caller);
 
             res.send(200);
         })
