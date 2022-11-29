@@ -59,13 +59,12 @@ def map_coordinate(cx, cy):  # assume that centroid coordinate in pixel unit
 def drive(raw_x, raw_y, caller='Fish', drive_mode='arcade'):
     data = json.dumps({raw_x, raw_y, caller,
                       drive_mode}, separators=(',', ':'))
-    requests.post('/drive', data)
-    # finish fetch
+    requests.post('http://localhost:3030/drive', data)
 
 
 def gen_frames_pi():
     # display video
-    while(True):
+    while (True):
         for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
             img = frame.array
             img_contour = img.copy()
@@ -82,11 +81,12 @@ def gen_frames_pi():
 
                 if area > CONTOUR_MIN_AREA:  # draw contour if area bigger than certain threshold
                     cv2.drawContours(img_contour, cnt, -1,
-                                    CONTOUR_COLOR, CONTOUR_THICKNESS)
+                                     CONTOUR_COLOR, CONTOUR_THICKNESS)
                     draw_rect(img_rect, cnt)
 
                     (raw_cx, raw_cy) = get_centroid(cnt)
-                    print("raw cx: " + str(raw_cx) + "; raw cy: " + str(raw_cy))
+                    print("raw cx: " + str(raw_cx) +
+                          "; raw cy: " + str(raw_cy))
 
                     (cx, cy) = map_coordinate(raw_cx, raw_cy)
                     print("cx: " + str(cx) + "; cy: " + str(cy))
@@ -98,18 +98,17 @@ def gen_frames_pi():
             # cv2.imshow("Rectangle Detection", img_rect)
 
             success, buffer = cv2.imencode('.jpg', img_rect)
-            
+
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
             # truncate and clear stream for next iteration
             raw_capture.truncate(0)
 
-            if cv2.waitKey(FRAMERATE) & 0xFF == ord('q'):  # tune wait time based on frame rate
+            # tune wait time based on frame rate
+            if cv2.waitKey(FRAMERATE) & 0xFF == ord('q'):
                 camera.close()
                 break
-        
-        
 
 
 lower = np.array([90, 130, 170], dtype="uint8")
@@ -167,7 +166,7 @@ def gen_frames():
 
 @app.route('/video_feed')
 def video_feed():
-    #return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    # return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
     return Response(gen_frames_pi(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
