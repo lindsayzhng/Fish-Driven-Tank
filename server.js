@@ -29,7 +29,7 @@ try {
 
             if (caller === 'Joystick') constants.DefaultInput.ignoreFish = ignoreFish;
 
-            if ((ignoreFish && caller === 'Joystick') || (!ignoreFish && caller === 'Fish'))
+            if ((caller === 'Joystick') || (!ignoreFish && caller === 'Fish'))
                 driveModes[driveMode](rawX, rawY, caller);
 
             res.send(200);
