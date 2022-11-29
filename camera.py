@@ -65,43 +65,51 @@ def drive(raw_x, raw_y, caller='Fish', drive_mode='arcade'):
 
 def gen_frames_pi():
     # display video
-    for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
-        img = frame.array
-        img_contour = img.copy()
-        img_rect = img.copy()
+    while(True):
+        for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
+            img = frame.array
+            img_contour = img.copy()
+            img_rect = img.copy()
 
-        # get contour
-        contours = cv2.findContours(
-            filter_img(img_contour), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # change to CHAIN_APPROX_NONE if necessary
-        contours = contours[0] if len(contours) == 2 else contours[1]
+            # get contour
+            contours = cv2.findContours(
+                filter_img(img_contour), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # change to CHAIN_APPROX_NONE if necessary
+            contours = contours[0] if len(contours) == 2 else contours[1]
 
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            print("area: " + str(area))
+            for cnt in contours:
+                area = cv2.contourArea(cnt)
+                print("area: " + str(area))
 
-            if area > CONTOUR_MIN_AREA:  # draw contour if area bigger than certain threshold
-                cv2.drawContours(img_contour, cnt, -1,
-                                 CONTOUR_COLOR, CONTOUR_THICKNESS)
-                draw_rect(img_rect, cnt)
+                if area > CONTOUR_MIN_AREA:  # draw contour if area bigger than certain threshold
+                    cv2.drawContours(img_contour, cnt, -1,
+                                    CONTOUR_COLOR, CONTOUR_THICKNESS)
+                    draw_rect(img_rect, cnt)
 
-                (raw_cx, raw_cy) = get_centroid(cnt)
-                print("raw cx: " + str(raw_cx) + "; raw cy: " + str(raw_cy))
+                    (raw_cx, raw_cy) = get_centroid(cnt)
+                    print("raw cx: " + str(raw_cx) + "; raw cy: " + str(raw_cy))
 
-                (cx, cy) = map_coordinate(raw_cx, raw_cy)
-                print("cx: " + str(cx) + "; cy: " + str(cy))
+                    (cx, cy) = map_coordinate(raw_cx, raw_cy)
+                    print("cx: " + str(cx) + "; cy: " + str(cy))
 
-                drive(cx, cy)
+                    drive(cx, cy)
 
-        cv2.imshow("Original Image", img)
-        cv2.imshow("Contour Detection", img_contour)
-        cv2.imshow("Rectangle Detection", img_rect)
+            # cv2.imshow("Original Image", img)
+            # cv2.imshow("Contour Detection", img_contour)
+            # cv2.imshow("Rectangle Detection", img_rect)
 
-        # truncate and clear stream for next iteration
-        raw_capture.truncate(0)
+            success, buffer = cv2.imencode('.jpg', img_rect)
+            
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
-        if cv2.waitKey(FRAMERATE) & 0xFF == ord('q'):  # tune wait time based on frame rate
-            camera.close()
-            break
+            # truncate and clear stream for next iteration
+            raw_capture.truncate(0)
+
+            if cv2.waitKey(FRAMERATE) & 0xFF == ord('q'):  # tune wait time based on frame rate
+                camera.close()
+                break
+        
+        
 
 
 lower = np.array([90, 130, 170], dtype="uint8")
@@ -159,9 +167,9 @@ def gen_frames():
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-    # return Response(gen_frames_pi(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    #return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gen_frames_pi(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=3000)
+    app.run(debug=True, port=3030)
