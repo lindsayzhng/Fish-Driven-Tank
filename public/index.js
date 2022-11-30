@@ -1,28 +1,31 @@
-let lock = true;
-
 function handleLock(el) {
-  lock = el.checked;
-  if (lock == true) {
-    console.log("lock");
-  }
-  if (lock == false) {
-    console.log("unlock");
-  }
+  ignoreFish(el.checked);
 }
 
 var joy = new JoyStick('joyDiv', {}, function (stickData) {
   stickData.x /= 100;
   stickData.y /= 100;
-  drive(stickData.x, stickData.y, lock);
+  drive(stickData.x, stickData.y);
 });
 
-function drive(rawX, rawY, lock, caller = 'Joystick', driveMode = 'arcade') {
+function ignoreFish(ignore) {
+  fetch("/ignoreFish", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ignore }),
+  });
+}
+
+function drive(rawX, rawY, caller = 'Joystick', driveMode = 'arcade') {
   fetch("/drive", {
     method: "POST",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ rawX, rawY, caller, driveMode, lock }),
+    body: JSON.stringify({ rawX, rawY, caller, driveMode, }),
   });
 }
