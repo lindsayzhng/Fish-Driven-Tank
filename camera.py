@@ -24,8 +24,7 @@ with PiCamera() as camera:
 
   def filter_img(img):
       # change color conversion code
-      img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-      img_blur = cv2.GaussianBlur(img_gray, GAUSSIAN_KERNEL, GAUSSIAN_SIGMA)
+      img_blur = cv2.GaussianBlur(img, GAUSSIAN_KERNEL, GAUSSIAN_SIGMA)
       img_canny = cv2.Canny(img_blur, CANNY_LOWER_THRESHOLD,
                             CANNY_UPPER_THRESHOLD)
       # order of dilation and erosion can be changed if needed
@@ -56,63 +55,59 @@ with PiCamera() as camera:
 
 
   def drive(raw_x, raw_y, caller='Fish', drive_mode='arcade'):
-      data = json.dumps({raw_x, raw_y, caller,
-                        drive_mode}, separators=(',', ':'))
-      requests.post('http://localhost:3030/drive', data)
+      data = {'rawX': raw_x, 'rawY': raw_y, 'caller': caller,
+                        'driveMode': drive_mode}
+      requests.post('http://localhost:3030/drive', json=data)
 
+  lower = np.array([0, 40, 0], dtype="uint8")
+  upper = np.array([255, 255, 255], dtype="uint8")
+
+  # lower = np.array([0, 0, 0], dtype="uint8")
+  # upper = np.array([255, 255, 255], dtype="uint8")
 
   def gen_frames_pi():
       # display video
-      while (True):
-          for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
-              img = frame.array
-              img_contour = img.copy()
-              img_rect = img.copy()
-
-                # get contour
-              contours = cv2.findContours(
-                  filter_img(img_contour), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # change to CHAIN_APPROX_NONE if necessary
-              contours = contours[0] if len(contours) == 2 else contours[1]
-
-              for cnt in contours:
-                  area = cv2.contourArea(cnt)
-                  print("area: " + str(area))
-
-              if area > CONTOUR_MIN_AREA:  # draw contour if area bigger than certain threshold
-                  cv2.drawContours(img_contour, cnt, -1,
-                                  CONTOUR_COLOR, CONTOUR_THICKNESS)
-                  draw_rect(img_rect, cnt)
-
-                  (raw_cx, raw_cy) = get_centroid(cnt)
-                  print("raw cx: " + str(raw_cx) + "; raw cy: " + str(raw_cy))
-
-                  (cx, cy) = map_coordinate(raw_cx, raw_cy)
-                  print("cx: " + str(cx) + "; cy: " + str(cy))
-
-                  drive(cx, cy)
-
-                # cv2.imshow("Original Image", img)
-                # cv2.imshow("Contour Detection", img_contour)
-                # cv2.imshow("Rectangle Detection", img_rect)
-
-              success, buffer = cv2.imencode('.jpg', img_rect)
-
-              yield (b'--frame\r\n'
-                    b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-
-                # truncate and clear stream for next iteration
-              raw_capture.truncate(0)
-
-              # tune wait time based on frame rate
-              if cv2.waitKey(FRAMERATE) & 0xFF == ord('q'):
-                  camera.close()
-                  break
+        for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
+            img = frame.array
+            img_contour = img.copy()
+            img_rect = img.copy()
 
 
-  lower = np.array([90, 130, 170], dtype="uint8")
-  upper = np.array([190, 220, 250], dtype="uint8")
+            mask = cv2.bitwise_not(cv2.inRange(img_contour, lower, upper))
+            img_contour = cv2.bitwise_and(img_contour, img_contour, mask=mask)
 
-  vid = cv2.VideoCapture(0)
+            # get contour
+            contours = cv2.findContours(
+                filter_img(img_contour), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # change to CHAIN_APPROX_NONE if necessary
+            contours = contours[0] if len(contours) == 2 else contours[1]
+
+            for cnt in contours:
+                area = cv2.contourArea(cnt)
+                print("area: " + str(area))
+
+                if area > CONTOUR_MIN_AREA:  # draw contour if area bigger than certain threshold
+                    cv2.drawContours(img_contour, cnt, -1,
+                                    CONTOUR_COLOR, CONTOUR_THICKNESS)
+                    draw_rect(img_rect, cnt)
+
+                    (raw_cx, raw_cy) = get_centroid(cnt)
+                    print("raw cx: " + str(raw_cx) + "; raw cy: " + str(raw_cy))
+
+                    (cx, cy) = map_coordinate(raw_cx, raw_cy)
+                    print("cx: " + str(cx) + "; cy: " + str(cy))
+
+                    drive(cx, cy)
+
+            success, buffer = cv2.imencode('.jpg', img_rect)
+
+            yield (b'--frame\r\n'
+                  b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+              # truncate and clear stream for next iteration
+            raw_capture.truncate(0)
+
+
+  # vid = cv2.VideoCapture(0)
   # cv2.namedWindow('frame')
 
   '''
@@ -156,10 +151,10 @@ with PiCamera() as camera:
               success, buffer = cv2.imencode('.jpg', output)
               yield (b'--frame\r\n'
                     b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-          #cv2.imshow('frame', np.hstack([frame, output]))
+              #cv2.imshow('frame', np.hstack([frame, output]))
 
-          # if (cv2.waitKey(1) == ord('x')):
-              # break
+              # if (cv2.waitKey(1) == ord('x')):
+                  # break
 
 
   @app.route('/video_feed')
@@ -169,4 +164,4 @@ with PiCamera() as camera:
 
 
   if __name__ == "__main__":
-      app.run(debug=False, port=3000)
+      app.run(debug=False, port=3000, host="0.0.0.0")
