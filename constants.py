@@ -10,6 +10,13 @@ BRIGHTNESS = 50
 X_OFFSET = 0
 Y_OFFSET = 0
 
+# lower and upper hsv value for color filtering
+HSV_LOWER_1 = [0, 100, 20]
+HSV_UPPER_1 = [10, 255, 255]
+
+HSV_LOWER_2 = [160, 100, 20]
+HSV_UPPER_2 = [179, 255, 255]
+
 # matrix of pixels - entries must be positive odd integer
 GAUSSIAN_KERNEL = (5, 5)
 GAUSSIAN_SIGMA = 1  # standard deviation r**2 - degree of significance of pixel in kernel
