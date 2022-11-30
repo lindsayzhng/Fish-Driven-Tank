@@ -1,9 +1,9 @@
 # all constants need to be tuned
 # max resolution for video - number of pixels (size of frame)
-FRAME_WIDTH = 1920
-FRAME_HEIGHT = 1080
+FRAME_WIDTH = 640
+FRAME_HEIGHT = 480
 
-FRAMERATE = 15
+FRAMERATE = 20
 BRIGHTNESS = 50
 
 # coordinate of center of tank in respect to coordinate of center of image
@@ -25,4 +25,4 @@ ERODE_KERNEL = (5, 5)
 
 CONTOUR_COLOR = (0, 255, 0)
 CONTOUR_THICKNESS = 2
-CONTOUR_MIN_AREA = 200
+CONTOUR_MIN_AREA = 250
