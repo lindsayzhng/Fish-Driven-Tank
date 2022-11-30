@@ -13,7 +13,6 @@ const DefaultInput = {
     rawY: 0,
     caller: 'Joystick',
     driveMode: 'arcade',
-    ignoreFish: false,
 }
 
 const Joystick = {
