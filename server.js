@@ -7,49 +7,39 @@ const port = 3030;
 app.use(express.static('public'))
 app.use(express.json());
 
+let ignoreFish = true;
+
 try {
     const { SoftPWM } = require('raspi-soft-pwm');
     const { init } = require('raspi');
 
-    // const videoStream = require('raspberrypi-node-camera-web-streamer');
-    // videoStream.acceptConnections(app, {
-    //   width: 1280,
-    //   height: 720,
-    //   fps: 16,
-    //   encoding: 'JPEG',
-    //   quality: 7 //lower is faster
-    // }, '/stream.mjpg', true);
     init(() => {
         const rightMotorForward = new SoftPWM(constants.Motors.RIGHT_FORWARD);
         const rightMotorBackward = new SoftPWM(constants.Motors.RIGHT_BACKWARD);
         const leftMotorForward = new SoftPWM(constants.Motors.LEFT_FORWARD);
         const leftMotorBackward = new SoftPWM(constants.Motors.LEFT_BACKWARD);
 
+        const driveModes = {
+            arcade: arcadeDrive,
+            curvature: curvatureDrive
+        };
+
+        app.post('/ignoreFish', (req, res) => {
+            const { ignore } = req.body;
+            ignoreFish = ignore;
+            res.send(200);
+        })
+
         app.post('/drive', (req, res) => {
-            const { rawX, rawY, lock, caller } = req.body;
+            const { rawX, rawY, caller, driveMode } = { ...constants.DefaultInput, ...req.body };
             console.log(req.body);
 
-            const driveMode = 'arcade';
-
-            if (lock) lockWheels();
-
-            switch (caller) {
-                case 'Joystick':
-                    // import
-                    break;
-                case 'Fish':
-                    // import
-                    break;
+            if (caller === 'Fish' && ignoreFish) {
+                res.send(200);
+                return;
             }
 
-            switch (driveMode) {
-                case 'arcade':
-                    arcadeDrive(rawX, rawY);
-                    break;
-                case 'curvature':
-                    curvatureDrive(rawX, rawY, true);
-                    break;
-            }
+            driveModes[driveMode](rawX, rawY, caller);
 
             res.send(200);
         })
@@ -58,11 +48,12 @@ try {
          * Ignore input values if it is within a specified range around zero. 
          * 
          * @param {number} value input
-         * @param {number} deadband specified range around zero
+         * @param {Object} caller caller of input
          * @param {number} maxMagnitude maximum magnitude of input
          * @returns value after deadband applied
          */
-        function applyDeadband(value, deadband = constants.Raw.INPUT_DEADBAND, maxMagnitude = 1) { // TODO: change max magnitude value
+        function applyDeadband(value, caller, maxMagnitude = 1) { // TODO: change max magnitude value
+            const deadband = caller.INPUT_DEADBAND;
             if (Math.abs(value) < deadband) return 0;
 
             // Map deadband to 0 and map max to max.
@@ -78,46 +69,59 @@ try {
 
             return value > 0 ? maxMagnitude * (value - deadband) / (maxMagnitude - deadband)
                 : maxMagnitude * (value + deadband) / (maxMagnitude - deadband);
-        };
+        }
 
         /**
-         * Get value clamped between a high and low boundary.
+         * Get value clamped between a high and low boundary, used when boundary set have different signs.
          * 
          * @param {number} value value needs to be clamped
-         * @param {number} low low boundary
-         * @param {number} high high boundary
-         * @returns clamped value
+         * @param {Object} caller caller of input
+         * @return clamped value
          */
-        function clamp(value, low = constants.Raw.MIN_INPUT, high = constants.Raw.MAX_INPUT) {
-            return Math.max(low, Math.min(value, high));
+        function clamp(value, caller) {
+            return Math.max(caller.MIN_INPUT, Math.min(value, caller.MAX_INPUT));
         }
 
         /**
          * Amplify input values.
          * 
          * @param {number} value input
-         * @param {number} magnitude degree of amplification
-         * @returns 
+         * @param {Object} caller caller of input
+         * @returns magnified input
          */
-        function magnifyInputs(value, magnitude = constants.Raw.MAGNIFY_DEGREE) {
-            return Math.sign(value) * Math.abs(value ** magnitude);
+        function magnifyInputs(value, caller) {
+            return Math.sign(value) * (Math.abs(value) ** caller.MAGNIFY_DEGREE);
         }
 
         /**
+         * Filter raw input values based on caller.
          * 
-         * @param {*} param0 
-         * @param {*} param1 
+         * @param {Array} rawInput raw input (x, y)
+         * @param {Array} fArr array of functions to filter raw
+         * @param {String} caller caller of the driver
          * @returns 
+         */
+        function filterRaw(rawInput, fArr, caller) {
+            return rawInput.map(n => fArr.reduce((curr, f) => f(curr, constants[caller]), n));
+        }
+
+        /**
+         * Desaturate.
+         * 
+         * @param {Array} speed speed output to the motor
+         * @param {Array} raw speed and rotation 
+         * @param {String} driveMode curvature or arcade
+         * @returns desaturated speed
          */
         function desaturate([leftSpeed, rightSpeed], [speed, rotation], driveMode) {
 
             const max = Math.max(Math.abs(speed), Math.abs(rotation));
 
+            if (!max) return [0, 0];
+
             switch (driveMode) {
                 case 'arcade':
                     const min = Math.min(Math.abs(speed), Math.abs(rotation));
-
-                    if (!max) return [0, 0];
                     const saturatedInput = (max + min) / max;
                     return [leftSpeed / saturatedInput, rightSpeed / saturatedInput];
                 case 'curvature':
@@ -126,13 +130,32 @@ try {
         }
 
         /**
+         * Remap number to certain range.
+         * 
+         * @param {number} value value that needs to be remapped
+         * @param {number} inMin input range minimum
+         * @param {number} inMax input range maximum
+         * @param {number} outMin output range minimum
+         * @param {number} outMax output range maximum
+         * @returns remapped value
+         */
+        function mapRange(value, inMin, inMax, outMin, outMax) {
+            return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+        }
+
+        /**
          * Set left and right motor speeds to the GPIO pins.
          * 
          * @param {number} leftSpeed 
          * @param {number} rightSpeed 
          */
-        function setMotors(leftSpeed, rightSpeed) {
-            leftMotorForward.write(leftSpeed > 0 ? leftSpeed : 0)
+        function setMotors(leftSpeed, rightSpeed, caller = constants.Joystick) {
+            leftSpeed = mapRange(leftSpeed, caller.MIN_INPUT, caller.MAX_INPUT, -constants.Motors.MAX_INPUT, constants.Motors.MAX_INPUT);
+            rightSpeed = mapRange(rightSpeed, caller.MIN_INPUT, caller.MAX_INPUT, -constants.Motors.MAX_INPUT, constants.Motors.MAX_INPUT);
+
+            console.log([leftSpeed, rightSpeed]);
+
+            leftMotorForward.write(leftSpeed > 0 ? leftSpeed : 0);
             leftMotorBackward.write(leftSpeed < 0 ? -leftSpeed : 0);
             rightMotorForward.write(rightSpeed > 0 ? rightSpeed : 0);
             rightMotorBackward.write(rightSpeed < 0 ? -rightSpeed : 0);
@@ -143,7 +166,7 @@ try {
          */
         function lockWheels() {
             setMotors(0, 0);
-        };
+        }
 
         /**
          * Arcade drive of the robot.
@@ -151,15 +174,13 @@ try {
          * @param {number} rawX raw x input
          * @param {number} rawY raw y input
          */
-        function arcadeDrive(rawX, rawY) {
+        function arcadeDrive(rawX, rawY, caller) {
 
-            const [rotation, speed] = [rawX, rawY].map(x => applyDeadband(x)).map(x => clamp(x)).map(x => magnifyInputs(x));
-            // console.log({ rotation, speed });
+            const [rotation, speed] = filterRaw([rawX, rawY], [applyDeadband, clamp, magnifyInputs], caller);
             const [leftSpeed, rightSpeed] = desaturate([speed + rotation, speed - rotation], [speed, rotation], 'arcade');
 
-            // console.log("Motors: ", leftSpeed, rightSpeed);
-            setMotors(leftSpeed, rightSpeed);
-        };
+            setMotors(leftSpeed, rightSpeed, caller);
+        }
 
         /**
          * Curvature drive of the robot.
@@ -167,16 +188,13 @@ try {
          * @param {number} rawX raw x input
          * @param {number} rawY raw y input
          */
-        function curvatureDrive(rawX, rawY, allowTurnInPlace = true) {
+        function curvatureDrive(rawX, rawY, caller) {
 
-            const [speed, rotation] = [rawX, rawY].map(x => applyDeadband(x)).map(x => clamp(x)).map(x => magnifyInputs(x));
-            const [leftSpeed, rightSpeed] = desaturate(
-                [speed - allowTurnInPlace ? rotation : Math.abs(speed) * rotation,
-                speed + allowTurnInPlace ? rotation : Math.abs(speed) * rotation],
-                [speed, rotation], 'curvature');
+            const [rotation, speed] = filterRaw([rawX, rawY], [applyDeadband, clamp, magnifyInputs], caller)
+            const [leftSpeed, rightSpeed] = desaturate([speed + rotation, speed - rotation], [speed, rotation], 'curvature');
 
-            setMotors(leftSpeed, rightSpeed);
-        };
+            setMotors(leftSpeed, rightSpeed, caller);
+        }
     });
 } catch (e) {
 

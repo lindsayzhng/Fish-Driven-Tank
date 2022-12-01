@@ -2,6 +2,9 @@
     "cSpell.words": [
         "Capy",
         "deadband",
-        "GPIO"
+        "GPIO",
+        "imshow",
+        "picamera",
+        "raspi"
     ]
 }
