@@ -44,8 +44,8 @@ with PiCamera() as camera:
         return (cx, cy)
 
     def map_coordinate(cx, cy):
-        dx = (cx - OFFSET[0]) / KIMCHI_RADIUS
-        dy = -(cy - OFFSET[1]) / KIMCHI_RADIUS
+        dx = -(cx - OFFSET[0]) / KIMCHI_RADIUS
+        dy = (cy - OFFSET[1]) / KIMCHI_RADIUS
         return (dx, dy)
 
     def drive(raw_x, raw_y, caller='Fish', drive_mode='curvature'):
@@ -77,8 +77,6 @@ with PiCamera() as camera:
                 area = cv2.contourArea(cnt)
 
                 if CONTOUR_MIN_AREA < area < CONTOUR_MAX_AREA:  # draw contour if area within range
-                    print("area: " + str(area))
-
                     cv2.drawContours(img_contour, cnt, -1,
                                      DRAW_COLOR, DRAW_THICKNESS)
                     draw_rect(img_rect, cnt)
@@ -90,7 +88,8 @@ with PiCamera() as camera:
                              DRAW_COLOR, DRAW_THICKNESS)
                     cv2.putText(img_rect, "{:.2f}".format(cx)+', '+"{:.2f}".format(cy),
                                 (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), DRAW_THICKNESS)
-
+                    cv2.putText(img_rect, "{:.2f}".format(area),
+                                (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), DRAW_THICKNESS)
                     drive(cx, cy)
 
             success, buffer = cv2.imencode('.jpg', (img_rect))

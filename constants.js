@@ -4,7 +4,7 @@ const Motors = {
     LEFT_FORWARD: 'GPIO13',
     LEFT_BACKWARD: 'GPIO12',
 
-    MAX_INPUT: 0.35,
+    MAX_INPUT: 0.15,
     MIN_INPUT: 0.0025
 };
 

@@ -140,6 +140,7 @@ try {
          * @returns remapped value
          */
         function mapRange(value, inMin, inMax, outMin, outMax) {
+            console.log({ value, inMin, inMax, outMin, outMax })
             return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
         }
 
@@ -149,9 +150,10 @@ try {
          * @param {number} leftSpeed 
          * @param {number} rightSpeed 
          */
-        function setMotors(leftSpeed, rightSpeed, caller = constants.Joystick) {
-            leftSpeed = mapRange(leftSpeed, caller.MIN_INPUT, caller.MAX_INPUT, -constants.Motors.MAX_INPUT, constants.Motors.MAX_INPUT);
-            rightSpeed = mapRange(rightSpeed, caller.MIN_INPUT, caller.MAX_INPUT, -constants.Motors.MAX_INPUT, constants.Motors.MAX_INPUT);
+        function setMotors(leftSpeed, rightSpeed, caller = 'Joystick') {
+            console.log({ caller })
+            leftSpeed = mapRange(leftSpeed, constants[caller].MIN_INPUT, constants[caller].MAX_INPUT, -constants.Motors.MAX_INPUT, constants.Motors.MAX_INPUT);
+            rightSpeed = mapRange(rightSpeed, constants[caller].MIN_INPUT, constants[caller].MAX_INPUT, -constants.Motors.MAX_INPUT, constants.Motors.MAX_INPUT);
 
             console.log([leftSpeed, rightSpeed]);
 
