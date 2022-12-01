@@ -48,7 +48,7 @@ try {
          * Ignore input values if it is within a specified range around zero. 
          * 
          * @param {number} value input
-     * @param {Object} caller caller of input
+         * @param {Object} caller caller of input
          * @param {number} maxMagnitude maximum magnitude of input
          * @returns value after deadband applied
          */
@@ -72,34 +72,22 @@ try {
         }
 
         /**
-     * Get value clamped between a high and low boundary, used when boundary set have different signs.
+         * Get value clamped between a high and low boundary, used when boundary set have different signs.
          * 
          * @param {number} value value needs to be clamped
-     * @param {Object} caller caller of input
-     * @return clamped value
+         * @param {Object} caller caller of input
+         * @return clamped value
          */
         function clamp(value, caller) {
             return Math.max(caller.MIN_INPUT, Math.min(value, caller.MAX_INPUT));
         }
 
         /**
-     * Get value clamped between an absolute high and low boundary. 
-     * Between [x, y] or [-x, -y], used when boundary set both have the same signs.
-         * 
-         * @param {number} value value needs to be clamped
-     * @param {Object} caller caller of input
-     * @return clamped value
-         */
-        function clampAbsolute(value, caller) {
-            return Math.sign(value) * Math.max(caller.MIN_INPUT, Math.max(Math.abs(value), caller.MAX_INPUT));
-        }
-
-        /**
          * Amplify input values.
          * 
-     * @param {number} value input
-     * @param {Object} caller caller of input
-     * @returns magnified input
+         * @param {number} value input
+         * @param {Object} caller caller of input
+         * @returns magnified input
          */
         function magnifyInputs(value, caller) {
             return Math.sign(value) * (Math.abs(value) ** caller.MAGNIFY_DEGREE);
@@ -135,8 +123,22 @@ try {
                     const saturatedInput = (max + min) / max;
                     return [leftSpeed / saturatedInput, rightSpeed / saturatedInput];
                 case 'curvature':
-                    return max > 1 ? [leftSpeed / max, rightSpeed / max] : [leftSpeed, rightSpeed];
+                    return (max && max > 1) ? [leftSpeed / max, rightSpeed / max] : [leftSpeed, rightSpeed];
             }
+        }
+
+        /**
+         * Remap number to certain range.
+         * 
+         * @param {number} value value that needs to be remapped
+         * @param {number} inMin input range minimum
+         * @param {number} inMax input range maximum
+         * @param {number} outMin output range minimum
+         * @param {number} outMax output range maximum
+         * @returns remapped value
+         */
+        function mapRange(value, inMin, inMax, outMin, outMax) {
+            return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
         }
 
         /**
@@ -145,13 +147,13 @@ try {
          * @param {number} leftSpeed 
          * @param {number} rightSpeed 
          */
-        function setMotors(leftSpeed, rightSpeed) {
-            leftSpeed = clampAbsolute(leftSpeed, constants.Motors);
-            rightSpeed = clampAbsolute(rightSpeed, constants.Motors);
+        function setMotors(leftSpeed, rightSpeed, caller = constants.Joystick) {
+            leftSpeed = mapRange(leftSpeed, caller.MIN_INPUT, caller.MAX_INPUT, -constants.Motors.MAX_INPUT, constants.Motors.MAX_INPUT);
+            rightSpeed = mapRange(rightSpeed, caller.MIN_INPUT, caller.MAX_INPUT, -constants.Motors.MAX_INPUT, constants.Motors.MAX_INPUT);
 
-            console.log(leftSpeed, rightSpeed);
+            console.log([leftSpeed, rightSpeed]);
 
-            leftMotorForward.write(leftSpeed > 0 ? leftSpeed : 0)
+            leftMotorForward.write(leftSpeed > 0 ? leftSpeed : 0);
             leftMotorBackward.write(leftSpeed < 0 ? -leftSpeed : 0);
             rightMotorForward.write(rightSpeed > 0 ? rightSpeed : 0);
             rightMotorBackward.write(rightSpeed < 0 ? -rightSpeed : 0);
@@ -173,10 +175,9 @@ try {
         function arcadeDrive(rawX, rawY, caller) {
 
             const [rotation, speed] = filterRaw([rawX, rawY], [applyDeadband, clamp, magnifyInputs], caller);
-            console.log(rotation, speed);
             const [leftSpeed, rightSpeed] = desaturate([speed + rotation, speed - rotation], [speed, rotation], 'arcade');
 
-            setMotors(leftSpeed, rightSpeed);
+            setMotors(leftSpeed, rightSpeed, caller);
         }
 
         /**
@@ -185,18 +186,12 @@ try {
          * @param {number} rawX raw x input
          * @param {number} rawY raw y input
          */
-        function curvatureDrive(rawX, rawY, caller, allowTurnInPlace = true) {
+        function curvatureDrive(rawX, rawY, caller) {
 
             const [rotation, speed] = filterRaw([rawX, rawY], [applyDeadband, clamp, magnifyInputs], caller)
-            console.log(rotation, speed);
-            const [leftSpeed, rightSpeed] = desaturate(
-                [speed - allowTurnInPlace ? rotation : Math.abs(speed) * rotation,
-                speed + allowTurnInPlace ? rotation : Math.abs(speed) * rotation],
-                [speed, rotation], 'curvature');
+            const [leftSpeed, rightSpeed] = desaturate([speed + rotation, speed - rotation], [speed, rotation], 'curvature');
 
-            console.log(leftSpeed, rightSpeed);
-
-            setMotors(leftSpeed, rightSpeed);
+            setMotors(leftSpeed, rightSpeed, caller);
         }
     });
 } catch (e) {

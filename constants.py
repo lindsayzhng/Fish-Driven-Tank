@@ -6,16 +6,13 @@ FRAME_HEIGHT = 480
 FRAMERATE = 20
 BRIGHTNESS = 50
 
-# coordinate of center of tank in respect to coordinate of center of image
-X_OFFSET = 100
-Y_OFFSET = 50
+# coordinate of center of tank in respect to coordinate of center of images
+OFFSET = (285, 225)
+KIMCHI_RADIUS = 120
 
 # lower and upper hsv value for color filtering
-HSV_LOWER_1 = [0, 100, 20]
-HSV_UPPER_1 = [10, 255, 255]
-
-HSV_LOWER_2 = [160, 100, 20]
-HSV_UPPER_2 = [179, 255, 255]
+HSV_LOWER_1 = [0, 0, 0]
+HSV_UPPER_1 = [40, 100, 100]
 
 # matrix of pixels - entries must be positive odd integer
 GAUSSIAN_KERNEL = (5, 5)
@@ -33,3 +30,5 @@ ERODE_KERNEL = (5, 5)
 CONTOUR_COLOR = (0, 255, 0)
 CONTOUR_THICKNESS = 2
 CONTOUR_MIN_AREA = 2000
+CONTOUR_MAX_AREA = 5000
+

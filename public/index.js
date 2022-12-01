@@ -19,7 +19,7 @@ function ignoreFish(ignore) {
   });
 }
 
-function drive(rawX, rawY, caller = 'Joystick', driveMode = 'arcade') {
+function drive(rawX, rawY, caller = 'Joystick', driveMode = 'curvature') {
   fetch("/drive", {
     method: "POST",
     headers: {

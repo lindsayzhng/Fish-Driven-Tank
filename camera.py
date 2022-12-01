@@ -46,38 +46,32 @@ with PiCamera() as camera:
         return (cx, cy)
 
     def map_coordinate(cx, cy):  # assume that centroid coordinate in pixel unit
-        return ((cx + X_OFFSET) / FRAME_WIDTH * 2 - 1, (cy + Y_OFFSET) / FRAME_HEIGHT * 2 - 1)
+        dx =   (cx - OFFSET[0]) / KIMCHI_RADIUS
+        dy =   -(cy - OFFSET[1]) / KIMCHI_RADIUS
+        return (dx, dy) 
 
-    def drive(raw_x, raw_y, caller='Fish', drive_mode='arcade'):
+    def drive(raw_x, raw_y, caller='Fish', drive_mode='curvature'):
         data = {'rawX': raw_x, 'rawY': raw_y, 'caller': caller,
                 'driveMode': drive_mode}
         requests.post('http://localhost:3030/drive', json=data)
 
-    # lower = np.array([0, 40, 0], dtype="uint8")
-    # upper = np.array([255, 255, 255], dtype="uint8")
-
-   # lower = np.array([0, 0, 0], dtype="uint8")
-   # upper = np.array([255, 255, 255], dtype="uint8")
-
-    lower1 = np.array(HSV_LOWER_1, dtype="uint8")
-    upper1 = np.array(HSV_UPPER_1, dtype="uint8")
-
-    lower2 = np.array(HSV_LOWER_2, dtype="uint8")
-    upper2 = np.array(HSV_UPPER_2, dtype="uint8")
+    lower = np.array([0, 40, 0], dtype="uint8")
+    upper = np.array([255, 255, 255], dtype="uint8")
 
     def gen_frames_pi():
         # display video
         for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
             img = frame.array
-            img_contour = cv2.cvtColor(img.copy(), cv2.COLOR_BGR2HSV)
+            img_contour = img.copy()
             img_rect = img.copy()
+            
+            cv2.circle(img_rect, OFFSET, KIMCHI_RADIUS, (0, 255, 0), 2)
 
-            mask1 = cv2.bitwise_not(cv2.inRange(img_contour, lower1, upper1))
-            mask2 = cv2.bitwise_not(cv2.inRange(img_contour, lower2, upper2))
-            full_mask = mask1 + mask2
+            mask1 = cv2.bitwise_not(cv2.inRange(img_contour, lower, upper))
+            # mask2 = cv2.bitwise_not(cv2.inRange(img_contour, lower2, upper2))
+            # full_mask = mask1 + mask2
 
-            img_contour = cv2.bitwise_and(
-                img_contour, img_contour, mask=full_mask)
+            img_contour = cv2.bitwise_and(img_contour, img_contour, mask=mask1)
 
             # get contour
             contours = cv2.findContours(
@@ -86,9 +80,10 @@ with PiCamera() as camera:
 
             for cnt in contours:
                 area = cv2.contourArea(cnt)
-                print("area: " + str(area))
+                
 
-                if area > CONTOUR_MIN_AREA:  # draw contour if area bigger than certain threshold
+                if CONTOUR_MIN_AREA < area < CONTOUR_MAX_AREA:  # draw contour if area bigger than certain threshold
+                    print("area: " + str(area))
                     cv2.drawContours(img_contour, cnt, -1,
                                      CONTOUR_COLOR, CONTOUR_THICKNESS)
                     draw_rect(img_rect, cnt)
@@ -96,15 +91,20 @@ with PiCamera() as camera:
                     (raw_cx, raw_cy) = get_centroid(cnt)
                     print("raw cx: " + str(raw_cx) +
                           "; raw cy: " + str(raw_cy))
+                    
+                    cv2.line(img_rect, OFFSET, (raw_cx, raw_cy), (255, 0, 0), 2)
+                    
 
                     (cx, cy) = map_coordinate(raw_cx, raw_cy)
-                    print("cx: " + str(cx) + "; cy: " + str(cy))
+                    
+                    cv2.putText(img_rect, "{:.2f}".format(cx)+', '+"{:.2f}".format(cy),
+                                (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
                     drive(cx, cy)
                     # break
 
 
-            success, buffer = cv2.imencode('.jpg', img_rect)
+            success, buffer = cv2.imencode('.jpg', (img_rect))
 
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
