@@ -11,8 +11,8 @@ OFFSET = (285, 225)
 KIMCHI_RADIUS = 120
 
 # lower and upper hsv value for color filtering
-HSV_LOWER_1 = [0, 0, 0]
-HSV_UPPER_1 = [40, 100, 100]
+BGR_LOWER = [0, 40, 0]
+BGR_UPPER = [255, 255, 255]
 
 # matrix of pixels - entries must be positive odd integer
 GAUSSIAN_KERNEL = (5, 5)
@@ -27,8 +27,9 @@ DILATE_KERNEL = (5, 5)
 # matrix of pixels - entries must be positive odd integer
 ERODE_KERNEL = (5, 5)
 
-CONTOUR_COLOR = (0, 255, 0)
-CONTOUR_THICKNESS = 2
+# area range for contour detection
 CONTOUR_MIN_AREA = 2000
 CONTOUR_MAX_AREA = 5000
 
+DRAW_COLOR = (0, 255, 0)
+DRAW_THICKNESS = 2

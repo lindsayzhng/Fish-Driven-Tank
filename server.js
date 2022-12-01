@@ -106,24 +106,26 @@ try {
         }
 
         /**
+         * Desaturate.
          * 
-         * @param {*} param0 
-         * @param {*} param1 
-         * @returns 
+         * @param {Array} speed speed output to the motor
+         * @param {Array} raw speed and rotation 
+         * @param {String} driveMode curvature or arcade
+         * @returns desaturated speed
          */
         function desaturate([leftSpeed, rightSpeed], [speed, rotation], driveMode) {
 
             const max = Math.max(Math.abs(speed), Math.abs(rotation));
 
+            if (!max) return [0, 0];
+
             switch (driveMode) {
                 case 'arcade':
                     const min = Math.min(Math.abs(speed), Math.abs(rotation));
-
-                    if (!max) return [0, 0];
                     const saturatedInput = (max + min) / max;
                     return [leftSpeed / saturatedInput, rightSpeed / saturatedInput];
                 case 'curvature':
-                    return (max && max > 1) ? [leftSpeed / max, rightSpeed / max] : [leftSpeed, rightSpeed];
+                    return max > 1 ? [leftSpeed / max, rightSpeed / max] : [leftSpeed, rightSpeed];
             }
         }
 
