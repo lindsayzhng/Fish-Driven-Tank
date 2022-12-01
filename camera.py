@@ -59,7 +59,7 @@ with PiCamera() as camera:
                         'driveMode': drive_mode}
       requests.post('http://localhost:3030/drive', json=data)
 
-  lower = np.array([0, 40, 0], dtype="uint8")
+  lower = np.array([0, 50, 50], dtype="uint8")
   upper = np.array([255, 255, 255], dtype="uint8")
 
   # lower = np.array([0, 0, 0], dtype="uint8")
@@ -97,6 +97,8 @@ with PiCamera() as camera:
                     print("cx: " + str(cx) + "; cy: " + str(cy))
 
                     drive(cx, cy)
+                    # break
+
 
             success, buffer = cv2.imencode('.jpg', img_rect)
 

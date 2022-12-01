@@ -34,7 +34,10 @@ try {
       const { rawX, rawY, caller, driveMode } = { ...constants.DefaultInput, ...req.body };
       console.log(req.body);
 
-      if (caller === 'Fish' && ignoreFish) return;
+      if (caller === 'Fish' && ignoreFish) {
+        res.send(200);
+        return;
+      }
 
       driveModes[driveMode](rawX, rawY, caller);
 

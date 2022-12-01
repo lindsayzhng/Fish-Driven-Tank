@@ -7,8 +7,8 @@ FRAMERATE = 20
 BRIGHTNESS = 50
 
 # coordinate of center of tank in respect to coordinate of center of image
-X_OFFSET = 0
-Y_OFFSET = 0
+X_OFFSET = 100
+Y_OFFSET = 50
 
 # matrix of pixels - entries must be positive odd integer
 GAUSSIAN_KERNEL = (5, 5)
@@ -25,4 +25,4 @@ ERODE_KERNEL = (5, 5)
 
 CONTOUR_COLOR = (0, 255, 0)
 CONTOUR_THICKNESS = 2
-CONTOUR_MIN_AREA = 250
+CONTOUR_MIN_AREA = 2000
